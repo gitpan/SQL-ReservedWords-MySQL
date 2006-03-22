@@ -2,16 +2,16 @@ NAME
     SQL::ReservedWords::MySQL - Reserved SQL words by MySQL
 
 SYNOPSIS
-       if ( SQL::ReservedWords::MySQL->is_reserved("accessible") ) {
-           die "Don't use reserved words in column names!";
+       if ( SQL::ReservedWords::MySQL->is_reserved( $word ) ) {
+           die "$word is a reserved MySQL word!";
        }
 
        # or
 
        use SQL::ReservedWords::MySQL 'is_reserved';
 
-       if ( is_reserved("group") ) {
-           die "Don't use reserved words in column names!";
+       if ( is_reserved( $word ) ) {
+           die "$word is a reserved MySQL word!";
        }
 
 DESCRIPTION
@@ -26,12 +26,15 @@ METHODS
         Returns a boolean indicating if $word is reserved by MySQL 3.2.
 
     is_reserved_by_mysql4( $word )
-        Returns a boolean indicating if $word is reserved by MySQL 4.0 or
-        4.1.
+        Returns a boolean indicating if $word is reserved by either MySQL
+        4.0 or 4.1.
 
     is_reserved_by_mysql5( $word )
-        Returns a boolean indicating if $word is reserved by MySQL 5.0 or
-        5.1.
+        Returns a boolean indicating if $word is reserved by either MySQL
+        5.0 or 5.1.
+
+    reserved_by( $word )
+        Returns a list with MySQL versions that reserves $word.
 
     words
         Returns a list with all reserved words.
@@ -43,6 +46,7 @@ EXPORTS
     is_reserved_by_mysql3
     is_reserved_by_mysql4
     is_reserved_by_mysql5
+    reserved_by
     words
 
 SEE ALSO

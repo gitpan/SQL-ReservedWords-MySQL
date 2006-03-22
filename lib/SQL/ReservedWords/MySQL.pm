@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use vars '$VERSION';
 
-$VERSION = 0.1;
+$VERSION = 0.2;
 
 use constant MYSQL32 => 0x01;
 use constant MYSQL40 => 0x02;
@@ -20,6 +20,7 @@ use constant MYSQL51 => 0x10;
         is_reserved_by_mysql3
         is_reserved_by_mysql4
         is_reserved_by_mysql5
+        reserved_by
         words
     ];
 
@@ -221,7 +222,7 @@ use constant MYSQL51 => 0x10;
         SQL_BIG_RESULT      => MYSQL32 | MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
         SQL_CALC_FOUND_ROWS =>           MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
         SQL_SMALL_RESULT    => MYSQL32 | MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
-        SSL                 => MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
+        SSL                 =>           MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
         STARTING            => MYSQL32 | MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
         STRAIGHT_JOIN       => MYSQL32 | MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
         TABLE               => MYSQL32 | MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
@@ -264,28 +265,40 @@ use constant MYSQL51 => 0x10;
         ZEROFILL            => MYSQL32 | MYSQL40 | MYSQL41 | MYSQL50 | MYSQL51,
     );
 
-    sub words {
-        return sort keys %WORDS;
-    }
-
     sub is_reserved {
         return $WORDS{ uc pop } || 0;
     }
 
     sub is_reserved_by_mysql3 {
-        return &is_reserved & MYSQL32;
+        my $flags = &is_reserved;
+        return $flags & MYSQL32;
     }
 
     sub is_reserved_by_mysql4 {
         my $flags = &is_reserved;
-        return    ( $flags & MYSQL40 ) == MYSQL40 
-               || ( $flags & MYSQL41 ) == MYSQL41;
+        return $flags & MYSQL40 || $flags & MYSQL41;
     }
 
     sub is_reserved_by_mysql5 {
         my $flags = &is_reserved;
-        return    ( $flags & MYSQL50 ) == MYSQL50 
-               || ( $flags & MYSQL51 ) == MYSQL51;
+        return $flags & MYSQL50 || $flags & MYSQL51;
+    }
+
+    sub reserved_by {
+        my $flags       = &is_reserved;
+        my @reserved_by = ();
+
+        push @reserved_by, 'MySQL 3.2' if $flags & MYSQL32;
+        push @reserved_by, 'MySQL 4.0' if $flags & MYSQL40;
+        push @reserved_by, 'MySQL 4.1' if $flags & MYSQL41;
+        push @reserved_by, 'MySQL 5.0' if $flags & MYSQL50;
+        push @reserved_by, 'MySQL 5.1' if $flags & MYSQL51;
+
+        return @reserved_by;
+    }
+
+    sub words {
+        return sort keys %WORDS;
     }
 }
 
@@ -299,16 +312,16 @@ SQL::ReservedWords::MySQL - Reserved SQL words by MySQL
 
 =head1 SYNOPSIS
 
-   if ( SQL::ReservedWords::MySQL->is_reserved("accessible") ) {
-       die "Don't use reserved words in column names!";
+   if ( SQL::ReservedWords::MySQL->is_reserved( $word ) ) {
+       die "$word is a reserved MySQL word!";
    }
 
    # or
 
    use SQL::ReservedWords::MySQL 'is_reserved';
 
-   if ( is_reserved("group") ) {
-       die "Don't use reserved words in column names!";
+   if ( is_reserved( $word ) ) {
+       die "$word is a reserved MySQL word!";
    }
 
 =head1 DESCRIPTION
@@ -321,7 +334,7 @@ Determine if words are reserved by MySQL.
 
 =item is_reserved( $word )
 
-Returns a boolean indicating if C<$word> is reserved by either MySQL 3.2, 4.0, 
+Returns a boolean indicating if C<$word> is reserved by either MySQL 3.2, 4.0,
 4.1, 5.0 or 5.1.
 
 =item is_reserved_by_mysql3( $word )
@@ -330,11 +343,15 @@ Returns a boolean indicating if C<$word> is reserved by MySQL 3.2.
 
 =item is_reserved_by_mysql4( $word )
 
-Returns a boolean indicating if C<$word> is reserved by MySQL 4.0 or 4.1.
+Returns a boolean indicating if C<$word> is reserved by either MySQL 4.0 or 4.1.
 
 =item is_reserved_by_mysql5( $word )
 
-Returns a boolean indicating if C<$word> is reserved by MySQL 5.0 or 5.1.
+Returns a boolean indicating if C<$word> is reserved by either MySQL 5.0 or 5.1.
+
+=item reserved_by( $word )
+
+Returns a list with MySQL versions that reserves C<$word>.
 
 =item words
 
@@ -355,6 +372,8 @@ Nothing by default. Following subroutines can be exported:
 =item is_reserved_by_mysql4
 
 =item is_reserved_by_mysql5
+
+=item reserved_by
 
 =item words
 
